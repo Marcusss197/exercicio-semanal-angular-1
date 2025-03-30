@@ -2,7 +2,8 @@ import { Component, inject } from '@angular/core';
 import { Curso } from '../../../models/curso';
 import { MdbFormsModule } from 'mdb-angular-ui-kit/forms';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CursoService } from '../../../services/curso.service';
 
 @Component({
   selector: 'app-curso-form',
@@ -12,23 +13,58 @@ import { ActivatedRoute } from '@angular/router';
   styleUrl: './curso-form.component.scss'
 })
 export class CursoFormComponent {
-  curso: Curso = new Curso();
+    curso: Curso = new Curso();
+  
     rotaAtivida = inject(ActivatedRoute);
+    roteador = inject(Router);
+    cursoService = inject(CursoService);
+
     constructor(){
       let id = this.rotaAtivida.snapshot.params['id'];
       if(id){
-        let curso1 = new Curso();
-        curso1.id = 1;
-        curso1.nomeCurso = 'Adminstração';
-        
-        this.curso = curso1;
+        this.findById(id);
       }
     }
+    findById(id: number){
+
+      this.cursoService.findById(id).subscribe({
+        next: (cursoRetorno) => {
+          this.curso = cursoRetorno;
+        },
+        error: (erro) => {
+          alert('Deu erro!');
+        }
+      });
+  
+    }
+  
     save(){
-      if(this.curso && this.curso.id > 0){
-        alert('estou fazendo um update...');
+      if(this.curso.id > 0){
+        // UPDATE
+        this.cursoService.update(this.curso, this.curso.id).subscribe({
+          next: (mensagem) => {
+            alert(mensagem);
+            this.roteador.navigate(['admin/curso']);
+          },
+          error: (erro) => {
+            alert('Deu erro!');
+          }
+        });
+  
+  
       }else{
-        alert('Salvando');
+        // SAVE
+        this.cursoService.save(this.curso).subscribe({
+          next: (mensagem) => {
+            alert(mensagem);
+            this.roteador.navigate(['admin/curso']);
+          },
+          error: (erro) => {
+            alert('Deu erro!');
+          }
+        });
+  
+  
       }
     }
 

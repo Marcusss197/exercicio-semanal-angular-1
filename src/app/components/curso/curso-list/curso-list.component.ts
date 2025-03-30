@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Curso } from '../../../models/curso';
+import { CursoService } from '../../../services/curso.service';
 
 @Component({
   selector: 'app-curso-list',
@@ -11,34 +12,36 @@ import { Curso } from '../../../models/curso';
 export class CursoListComponent {
   lista: Curso[] = [];
   
-  constructor(){
-    this.findAll();
-}
+  cursoService = inject(CursoService);
+        constructor(){
+          this.findAll();
+        }
 
 
 findAll(){
-  let curso1 = new Curso();
-  curso1.id = 1;
-  curso1.nomeCurso = 'Adminstração';
+  this.cursoService.findAll().subscribe({
+    next: (listaRetornada) => {
+      this.lista = listaRetornada;
+    },
+    error: (erro) => {
+      alert('Deu erro!');
+    }
+  });
 
-  let curso2 = new Curso();
-  curso2.id = 2;
-  curso2.nomeCurso = 'Psicologia';
-
-  let curso3 = new Curso();
-  curso3.id = 1;
-  curso3.nomeCurso = 'T.I';
-  
-
-  
-  
-  this.lista.push(curso1,curso2,curso3);
 }
 
 delete(curso: Curso){
   let indice = this.lista.findIndex(x => {return x.id == curso.id});
   if(confirm('Deseja deletar?')){
-    this.lista.splice(indice, 1);
+    this.cursoService.deleteById(curso.id).subscribe({
+      next: (mensagem) => {
+        alert(mensagem);
+        this.findAll();
+      },
+      error: (erro) => {
+        alert('Deu erro!');
+      }
+    });
   }
 }
 }

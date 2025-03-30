@@ -1,8 +1,9 @@
 import { Component, inject } from '@angular/core';
 import { MdbFormsModule } from 'mdb-angular-ui-kit/forms';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Turma } from '../../../models/turma';
+import { TurmaService } from '../../../services/turma.service';
 
 @Component({
   selector: 'app-turma-form',
@@ -13,24 +14,57 @@ import { Turma } from '../../../models/turma';
 })
 export class TurmaFormComponent {
   turma: Turma = new Turma();
+    
   rotaAtivida = inject(ActivatedRoute);
+  roteador = inject(Router);
+  turmaService = inject(TurmaService);
+
   constructor(){
     let id = this.rotaAtivida.snapshot.params['id'];
-    if(id){
-      let turma1 = new Turma();
-      turma1.id = 1;
-      turma1.nomeTurma = 'Analise e Desenvolvimento de Software';
-      turma1.semestre = "2";
-      turma1.ano = "3°";
-      turma1.turno = 'Noturno'
-      this.turma = turma1;
-    }
+      if(id){
+        this.findById(id);
+      }
   }
+  findById(id: number){
+
+    this.turmaService.findById(id).subscribe({
+      next: (turmaRetorno) => {
+        this.turma = turmaRetorno;
+      },
+      error: (erro) => {
+        alert('Deu erro!');
+      }
+    });
+  
+  }
+  
   save(){
-    if(this.turma && this.turma.id > 0){
-      alert('estou fazendo um update...');
+    if(this.turma.id > 0){
+      // UPDATE
+      this.turmaService.update(this.turma, this.turma.id).subscribe({
+        next: (mensagem) => {
+          alert(mensagem);
+          this.roteador.navigate(['admin/turma']);
+        },
+        error: (erro) => {
+          alert('Deu erro!');
+        }
+      });
+  
+  
     }else{
-      alert('Salvando');
+      // SAVE
+      this.turmaService.save(this.turma).subscribe({
+        next: (mensagem) => {
+          alert(mensagem);
+          this.roteador.navigate(['admin/turma']);
+        },
+        error: (erro) => {
+          alert('Deu erro!');
+        }
+      });
+  
+  
     }
   }
 }

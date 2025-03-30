@@ -1,47 +1,84 @@
-import { Component } from '@angular/core';
+import { Component, inject, TemplateRef, ViewChild } from '@angular/core';
 import { Aluno } from '../../../models/aluno';
+import { AlunoService } from '../../../services/aluno.service';
+import { MdbModalModule, MdbModalRef, MdbModalService } from 'mdb-angular-ui-kit/modal';
+import Swal from 'sweetalert2';
+import { AlunoFormComponent } from '../aluno-form/aluno-form.component';
 
 @Component({
   selector: 'app-aluno-list',
   standalone: true,
-  imports: [],
+  imports: [MdbModalModule, AlunoFormComponent],
   templateUrl: './aluno-list.component.html',
   styleUrl: './aluno-list.component.scss'
 })
 export class AlunoListComponent {
       lista: Aluno[] = [];
+      pesquisa: string = "";
+      alunoEdit!: Aluno;
+    
+      @ViewChild("modalAlunoForm") modalAlunoForm!: TemplateRef<any>; //referência ao template da modal
+      modalService = inject(MdbModalService); //para abrir a modal
+      modalRef!: MdbModalRef<any>; //vc conseguir fechar a modal depois
+    
 
+      alunoService = inject(AlunoService);
       constructor(){
         this.findAll();
       }
 
 
-findAll(){
-  let aluno1 = new Aluno();
-  aluno1.id = 1;
-  aluno1.nomeAluno = 'Leticia';
-  aluno1.cpf = '800.344.010-67';
-  aluno1.telefone = '(84) 3478-5181';
-
-  let aluno2 = new Aluno();
-  aluno2.id = 2;
-  aluno2.nomeAluno = 'Janine';
-  aluno2.cpf = '975.189.030-67';
-  aluno2.telefone = '(66) 2682-7123';
-
-  let aluno3 = new Aluno();
-  aluno3.id = 3;
-  aluno3.nomeAluno = 'Lucas';
-  aluno3.cpf = '985.994.270-67';
-  aluno3.telefone = '(64) 2875-6169';
-  
-  this.lista.push(aluno1, aluno2, aluno3);
-}
-
-delete(aluno: Aluno){
-  let indice = this.lista.findIndex(x => {return x.id == aluno.id});
-  if(confirm('Deseja deletar?')){
-    this.lista.splice(indice, 1);
-  }
-}
+      findAll(){
+   
+        this.alunoService.findAll().subscribe({
+          next: (listaRetornada) => {
+            this.lista = listaRetornada;
+          },
+          error: (erro) => {
+            Swal.fire(erro.error, '', 'error');
+          }
+        });
+      
+      }
+    
+      delete(aluno: Aluno){
+    
+        Swal.fire({
+          title: 'Deseja mesmo deletar?',
+          showCancelButton: true,
+          confirmButtonText: 'Sim',
+          cancelButtonText: `Cancelar`,
+        }).then((result) => {
+          if (result.isConfirmed) {
+    
+            this.alunoService.deleteById(aluno.id).subscribe({
+              next: (mensagem) => {
+                Swal.fire(mensagem, '', 'success');
+                this.findAll();
+              },
+              error: (erro) => {
+                Swal.fire(erro.error, '', 'error');
+              }
+            });
+            
+          }
+        });
+          
+    
+      }
+    
+      new(){ //ABRIR
+        this.alunoEdit = new Aluno(); 
+        this.modalRef = this.modalService.open(this.modalAlunoForm, { modalClass: 'modal-xl'});
+      }
+    
+      edit(aluno: Aluno){
+        this.alunoEdit = aluno;
+        this.modalRef = this.modalService.open(this.modalAlunoForm, { modalClass: 'modal-xl'});
+      }
+    
+      meuEventoTratamento(mensagem:any){
+        this.findAll();
+        this.modalRef.close();
+      }
 }
